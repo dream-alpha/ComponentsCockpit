@@ -1,0 +1,7 @@
+Description: ComponentsCockpit
+Maintainer: dream-alpha
+Package: enigma2-plugin-systemplugins-componentscockpit
+Version: 4.3.7
+Architecture: all
+Conflicts: enigma2-plugin-systemplugins-cockpitcomponents
+Replaces: enigma2-plugin-systemplugins-cockpitcomponents
