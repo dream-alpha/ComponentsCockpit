@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -19,10 +18,10 @@
 # <http://www.gnu.org/licenses/>.
 
 
-from Components.Element import cached, ElementError
-from Components.Converter.Converter import Converter
 from enigma import iServiceInformation
 from ServiceReference import ServiceReference
+from Components.Element import cached, ElementError
+from Components.Converter.Converter import Converter
 
 
 class COCMovieInfo(Converter):
@@ -46,7 +45,7 @@ class COCMovieInfo(Converter):
             self.type = self.MOVIE_EVENT_DURATION
         else:
             raise ElementError(
-                "'%s' is not <ShortDescription|MetaDescription|RecordServiceName|FileSize|MovieDuration> for MovieInfo converter" % type)
+                f"'{atype}' is not <ShortDescription|MetaDescription|RecordServiceName|FileSize|MovieDuration> for MovieInfo converter")
         Converter.__init__(self, atype)
 
     @cached
@@ -80,9 +79,9 @@ class COCMovieInfo(Converter):
                     filesize /= 1024 * 1024
                     if filesize > 0:
                         if filesize < 1000:
-                            text = "%d MB" % filesize
+                            text = f"{filesize:d} MB"
                         else:
-                            text = "%d GB" % (filesize / 1024)
+                            text = f"{filesize // 1024:d} GB"
         return text
 
     text = property(getText)

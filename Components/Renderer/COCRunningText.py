@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 ################################################################################
 #    RunningText.py - Running Text Renderer for Enigma2
@@ -56,6 +55,16 @@ BLOCK = 3
 
 
 class COCRunningText(Renderer):
+    # Sets for membership testing
+    VALIGN_VALUES = {"top", "center", "bottom"}
+    HALIGN_VALUES = {"left", "center", "right", "block"}
+    WRAP_VALUES = {"wrap", "nowrap"}
+    MOVETYPE_VALUES = {"none", "running", "swimming"}
+    DIRECTION_VALUES = {"left", "right", "top", "bottom"}
+    SHADOW_BORDER_ATTRS = {"shadowColor", "borderColor"}
+    VERTICAL_DIRECTIONS = {TOP, BOTTOM}
+    HORIZONTAL_DIRECTIONS = {LEFT, RIGHT}
+
     def __init__(self):
         Renderer.__init__(self)
         self.skinAttributes = None
@@ -82,13 +91,11 @@ class COCRunningText(Renderer):
     def postWidgetCreate(self, instance):
         self.scroll_label = eLabel(instance)
         self.__timer = eTimer()
-        self._timer_conn = None
-        self._timer_conn = self.__timer.timeout.connect(self.movingLoop)
+        self.__timer.callback.append(self.movingLoop)
 
     def preWidgetRemove(self, _instance):
         self.__timer.stop()
         self.__timer = None
-        self._timer_conn = None
         self.scroll_label = None
 
     def applySkin(self, desktop, screen):
@@ -116,7 +123,7 @@ class COCRunningText(Renderer):
                     self.txfont = parseFont(value, ((1, 1), (1, 1)))
                 elif attrib == "foregroundColor":
                     self.scroll_label.setForegroundColor(parseColor(value))
-                elif attrib in ("shadowColor", "borderColor"):  # fake for openpli-enigma2
+                elif attrib in self.SHADOW_BORDER_ATTRS:  # fake for openpli-enigma2
                     self.scroll_label.setShadowColor(parseColor(value))
                 elif attrib == "shadowOffset":
                     x, y = value.split(',')
@@ -124,12 +131,12 @@ class COCRunningText(Renderer):
                     self.scroll_label.setShadowOffset(ePoint(self.soffset))
                 elif attrib == "borderWidth":  # fake for openpli-enigma2
                     self.soffset = (-int(value), -int(value))
-                elif attrib == "valign" and value in ("top", "center", "bottom"):
+                elif attrib == "valign" and value in self.VALIGN_VALUES:
                     valign = {"top": eLabel.alignTop, "center": eLabel.alignCenter,
                               "bottom": eLabel.alignBottom}[value]
                     self.txtflags |= {
                         "top": RT_VALIGN_TOP, "center": RT_VALIGN_CENTER, "bottom": RT_VALIGN_BOTTOM}[value]
-                elif attrib == "halign" and value in ("left", "center", "right", "block"):
+                elif attrib == "halign" and value in self.HALIGN_VALUES:
                     self.halign = {"left": eLabel.alignLeft, "center": eLabel.alignCenter,
                                    "right": eLabel.alignRight, "block": eLabel.alignBlock}[value]
                     self.txtflags |= {"left": RT_HALIGN_LEFT, "center": RT_HALIGN_CENTER,
@@ -148,12 +155,12 @@ class COCRunningText(Renderer):
                             opt, val = o.strip(), ""
                         if opt == "":
                             continue
-                        if opt in ("wrap", "nowrap"):
+                        if opt in self.WRAP_VALUES:
                             setWrapFlag(opt, val)
-                        elif opt == "movetype" and val in ("none", "running", "swimming"):
+                        elif opt == "movetype" and val in self.MOVETYPE_VALUES:
                             self.type = {
                                 "none": NONE, "running": RUNNING, "swimming": SWIMMING}[val]
-                        elif opt == "direction" and val in ("left", "right", "top", "bottom"):
+                        elif opt == "direction" and val in self.DIRECTION_VALUES:
                             self.direction = {
                                 "left": LEFT, "right": RIGHT, "top": TOP, "bottom": BOTTOM}[val]
                         elif opt == "step" and val:
@@ -210,7 +217,7 @@ class COCRunningText(Renderer):
         self.scroll_label.move(ePoint(0, 0))
         self.scroll_label.resize(eSize(self.W, self.H))
         # test for auto correction text height:
-        if self.direction in (TOP, BOTTOM):
+        if self.direction in self.VERTICAL_DIRECTIONS:
             flh = int(fontRenderClass.getInstance().getLineHeight(
                 self.txfont) or self.txfont.pointSize / 6 + self.txfont.pointSize)
             self.scroll_label.setText("WQq")
@@ -236,12 +243,11 @@ class COCRunningText(Renderer):
             self.txtext = ""
             if self.instance:
                 self.scroll_label.setText("")
-        else:
-            if self.mShown:
-                self.txtext = self.source.text or ""
-                if self.instance and not self.calcMoving():
-                    self.scroll_label.resize(eSize(self.W, self.H))
-                    self.moveLabel(self.X, self.Y)
+        elif self.mShown:
+            self.txtext = self.source.text or ""
+            if self.instance and not self.calcMoving():
+                self.scroll_label.resize(eSize(self.W, self.H))
+                self.moveLabel(self.X, self.Y)
 
     def moveLabel(self, X, Y):
         self.scroll_label.move(
@@ -280,7 +286,7 @@ class COCRunningText(Renderer):
         if self.txtext == "" or self.type == NONE or self.scroll_label is None:
             return False
 
-        if self.direction in (LEFT, RIGHT) or not self.txtflags & RT_WRAP:
+        if self.direction in self.HORIZONTAL_DIRECTIONS or not self.txtflags & RT_WRAP:
             # stupid workaround, have no better idea right now...
             self.scroll_label.resize(
                 eSize(self.txfont.pointSize * len(self.txtext), self.H))
@@ -289,12 +295,12 @@ class COCRunningText(Renderer):
         text_width = text_size.width()
         text_height = text_size.height()
 
-        if self.direction in (LEFT, RIGHT) or not self.txtflags & RT_WRAP:
+        if self.direction in self.HORIZONTAL_DIRECTIONS or not self.txtflags & RT_WRAP:
             text_width += 10
 
         self.mStop = None
         # text height correction if necessary:
-        if self.lineHeight and self.direction in (TOP, BOTTOM):
+        if self.lineHeight and self.direction in self.VERTICAL_DIRECTIONS:
             text_height = max(
                 text_height, (text_height + self.lineHeight - 1) / self.lineHeight * self.lineHeight)
 
@@ -302,7 +308,7 @@ class COCRunningText(Renderer):
 # 		self.direction =	0 - LEFT; 1 - RIGHT;   2 - TOP;      3 - BOTTOM
 # 		self.halign =		0 - LEFT; 1 - RIGHT;   2 - CENTER;   3 - BLOCK
 
-        if self.direction in (LEFT, RIGHT):
+        if self.direction in self.HORIZONTAL_DIRECTIONS:
             if not self.mAlways and text_width <= self.W:
                 return False
             if self.type == RUNNING:
@@ -356,7 +362,7 @@ class COCRunningText(Renderer):
                             self.mStep) if self.direction == RIGHT else -abs(self.mStep)
             else:
                 return False
-        elif self.direction in (TOP, BOTTOM):
+        elif self.direction in self.VERTICAL_DIRECTIONS:
             if not self.mAlways and text_height <= self.H:
                 return False
             if self.type == RUNNING:
@@ -413,7 +419,7 @@ class COCRunningText(Renderer):
         self.scroll_label.resize(eSize(self.xW, self.xH))
 
         if self.mStartDelay:
-            if self.direction in (LEFT, RIGHT):
+            if self.direction in self.HORIZONTAL_DIRECTIONS:
                 self.moveLabel(self.P, self.Y)
             else:  # if self.direction in (TOP,BOTTOM):
                 self.moveLabel(self.X, self.P)
@@ -424,7 +430,7 @@ class COCRunningText(Renderer):
 
     def movingLoop(self):
         if self.A <= self.P <= self.B:
-            if self.direction in (LEFT, RIGHT):
+            if self.direction in self.HORIZONTAL_DIRECTIONS:
                 self.moveLabel(self.P, self.Y)
             else:  # if self.direction in (TOP,BOTTOM)
                 self.moveLabel(self.X, self.P)

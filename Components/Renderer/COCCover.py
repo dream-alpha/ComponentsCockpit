@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
-# Copyright (C) 2018-2025 by dream-alpha
+# Copyright (C) 2018-2023 dream-alpha
 #
 # In case of reuse of this source code please do not remove this copyright.
 #
@@ -50,8 +49,7 @@ class COCCover(Renderer):
                     scale = AVSwitch().getFramebufferScale()
                     size = self.instance.size()
                     self.picload = ePicLoad()
-                    self.picload_conn = self.picload.PictureData.connect(
-                        self.displayPixmapCallback)
+                    self.picload.PictureData.append(self.displayPixmapCallback)
                     self.picload.setPara(
                         (size.width(), size.height(), scale[0], scale[1], False, 1, "#ff000000"))
                     self.picload.startDecodeBuffer(

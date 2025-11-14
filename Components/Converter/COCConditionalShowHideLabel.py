@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -22,7 +21,7 @@
 from Components.Converter.ConditionalShowHide import ConditionalShowHide
 
 
-class COCConditionalShowHideLabel(ConditionalShowHide, object):
+class COCConditionalShowHideLabel(ConditionalShowHide):
     def __init__(self, args):
         ConditionalShowHide.__init__(self, args)
 

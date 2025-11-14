@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -68,9 +67,9 @@ class COCServicePosition(ServicePosition):
             if self.type == self.TYPE_ENDTIME:
                 pos = (self.length - self.position) / 90000
                 t = time.localtime(time.time() + pos)
-                text = "%02d:%02d" % (t.tm_hour, t.tm_min)
+                text = f"{t.tm_hour:02d}:{t.tm_min:02d}"
                 if not self.showNoSeconds:
-                    text += ":%02d" % t.tm_sec
+                    text += f":{t.tm_sec:02d}"
                 if pos >= 0:
                     text = ">" + text
                 else:
@@ -93,14 +92,14 @@ class COCServicePosition(ServicePosition):
                 milliseconds = (pos % 90000) / 90
                 pos /= 90000
                 if self.showHours:
-                    text += sign + "%d" % (pos / 3600)  # hours
-                    text += ":%02d" % (pos % 3600 / 60)  # minutes
+                    text += sign + f"{pos // 3600:d}"  # hours
+                    text += f":{pos % 3600 // 60:02d}"  # minutes
                 else:
-                    text += sign + "%d" % (pos / 60)  # minutes
+                    text += sign + f"{pos // 60:d}"  # minutes
                 if not self.showNoSeconds:
-                    text += ":%02d" % (pos % 60)  # seconds
+                    text += f":{pos % 60:02d}"  # seconds
                     if self.detailed:
-                        text += ":%03d" % milliseconds  # milliseconds
+                        text += f":{milliseconds:03.0f}"  # milliseconds
         return text
 
     text = property(getText)

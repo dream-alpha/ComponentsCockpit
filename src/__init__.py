@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # coding=utf-8
 #
 # Copyright (C) 2018-2025 by dream-alpha
@@ -21,8 +20,8 @@
 
 import os
 import gettext
-from Components.Language import language
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS
+from Components.Language import language
 from .Version import PLUGIN
 from .Debug import initLogging
 

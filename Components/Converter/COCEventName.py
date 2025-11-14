@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -19,12 +18,12 @@
 # <http://www.gnu.org/licenses/>.
 
 
+from Tools.Log import Log
 from Components.Converter.Converter import Converter
 from Components.Element import cached
-from Tools.Log import Log
 
 
-class COCEventName(Converter, object):
+class COCEventName(Converter):
 
     # types
     NAME = 0
@@ -83,8 +82,8 @@ class COCEventName(Converter, object):
             elif self.type == self.FULL_DESCRIPTION:
                 desc = self._getShortDesc(event)
                 if desc:
-                    desc = "%s\n\n" % (desc, )
-                desc = "%s%s" % (desc, self._getExtendedDesc(event))
+                    desc = f"{desc}\n\n"
+                desc = f"{desc}{self._getExtendedDesc(event)}"
                 text = desc
 
             elif self.type == self.ID:
@@ -94,28 +93,27 @@ class COCEventName(Converter, object):
                 name = event.getEventName()
                 desc = self._getShortDesc(event)
                 if desc and desc != name:
-                    text = "%s - %s" % (name, desc)
+                    text = f"{name} - {desc}"
                 text = name
 
             elif self.type == self.SHORT_EXTENDED_DESCRIPTION:
                 desc = self._getShortDesc(event)
                 ext = self._getExtendedDesc(event)
                 if desc:
-                    desc = "%s\n" % (desc, )
-                text = "%s%s" % (desc, ext)
+                    desc = f"{desc}\n"
+                text = f"{desc}{ext}"
 
             elif self.type == self.ALL:
                 name = self._filter(event.getEventName())
                 desc = self._getShortDesc(event)
                 if desc:
-                    desc = "%s\n\n" % (desc,)
+                    desc = f"{desc}\n\n"
                 ext = self._getExtendedDesc(event)
-                desc = "%s%s" % (desc, ext)
-                text = "%s\n\n%s" % (name, desc)
+                desc = f"{desc}{ext}"
+                text = f"{name}\n\n{desc}"
 
             elif self.type == self.SHORT_AND_EXTENDED_DESCRIPTION:
-                text = "%s|%s" % (self._getShortDesc(event),
-                                  self._getExtendedDesc(event))
+                text = f"{self._getShortDesc(event)}|{self._getExtendedDesc(event)}"
 
         return text
 

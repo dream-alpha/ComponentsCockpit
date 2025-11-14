@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -20,9 +19,9 @@
 
 
 from time import time
+from Poll import Poll
 from Components.Element import cached
 from Components.Converter.Converter import Converter
-from Poll import Poll
 
 
 class COCEventTime(Poll, Converter):
@@ -59,7 +58,7 @@ class COCEventTime(Poll, Converter):
             secs = value % 60
             if self.negate:
                 mins *= -1
-            text = "%+d:%02d" % (mins, secs)
+            text = f"{mins:+d}:{secs:02d}"
 
         return text
 

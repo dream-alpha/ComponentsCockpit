@@ -20,7 +20,7 @@
 
 import sys
 import logging
-from Components.config import config, ConfigSubsection, ConfigDirectory, ConfigSelection  # noqa: F401, pylint: disable=W0611
+from Components.config import config, ConfigSubsection, ConfigDirectory, ConfigSelection  # noqa: F401, pylint: disable=unused-import
 from .Version import ID, PLUGIN
 
 
@@ -28,14 +28,20 @@ logger = None
 streamer = None
 format_string = ID + ": " + "%(levelname)s: %(filename)s: %(funcName)s: %(message)s"
 log_levels = {"ERROR": logging.ERROR, "INFO": logging.INFO, "DEBUG": logging.DEBUG}
+# Convert log_levels to list of tuples for ConfigSelection
+log_level_choices = [(k, k) for k in log_levels]
 plugin = PLUGIN.lower()
-exec("config.plugins." + plugin + " = ConfigSubsection()")  # noqa: F401, pylint: disable=W0122
-exec("config.plugins." + plugin + ".debug_log_level = ConfigSelection(default='INFO', choices=log_levels.keys())")  # noqa: F401, pylint: disable=W0122
+# Create dynamic config namespace using setattr instead of exec for better Python 3 compatibility
+if not hasattr(config.plugins, plugin):
+    setattr(config.plugins, plugin, ConfigSubsection())
+plugin_config = getattr(config.plugins, plugin)
+if not hasattr(plugin_config, 'debug_log_level'):
+    plugin_config.debug_log_level = ConfigSelection(default='INFO', choices=log_level_choices)
 
 
 def initLogging():
-    global logger
-    global streamer
+    global logger  # pylint: disable=global-statement
+    global streamer  # pylint: disable=global-statement
     if not logger:
         logger = logging.getLogger(ID)
         formatter = logging.Formatter(format_string)
@@ -43,7 +49,8 @@ def initLogging():
         streamer.setFormatter(formatter)
         logger.addHandler(streamer)
         logger.propagate = False
-        setLogLevel(log_levels[eval("config.plugins." + plugin + ".debug_log_level").value])
+        current_plugin_config = getattr(config.plugins, plugin)
+        setLogLevel(log_levels[current_plugin_config.debug_log_level.value])
 
 
 def setLogLevel(level):

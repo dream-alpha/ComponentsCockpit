@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # coding=utf-8
 #
 # Copyright (C) 2018-2025 by dream-alpha
@@ -21,6 +20,6 @@
 
 PLUGIN = "ComponentsCockpit"
 ID = "COC"
-VERSION = "5.2.2"
+VERSION = "0.0.2"
 COPYRIGHT = "2018-2025 by dream-alpha"
 LICENSE = "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version."

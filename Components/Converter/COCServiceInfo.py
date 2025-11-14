@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -21,15 +20,15 @@
 
 from __future__ import division
 from __future__ import print_function
-from Components.Converter.Converter import Converter
-from Components.Element import cached
 from enigma import (
     eServiceReference, iServiceInformation, iPlayableService, iAudioType_ENUMS as iAt, CT_MPEG2, CT_H264, CT_MPEG1, CT_MPEG4_PART2, CT_VC1, CT_VC1_SIMPLE_MAIN, CT_H265, CT_DIVX311, CT_DIVX4, CT_SPARK, CT_VP6, CT_VP8, CT_VP9, CT_H263, CT_MJPEG, CT_REAL, CT_AVS, CT_UNKNOWN, iDVBFrontend as FE
 )
 from Tools.Transponder import ConvertToHumanReadable
+from Components.Converter.Converter import Converter
+from Components.Element import cached
 
 
-class COCServiceInfo(Converter, object):
+class COCServiceInfo(Converter):
     HAS_TELETEXT = 0
     IS_MULTICHANNEL = 1
     IS_CRYPTED = 2
@@ -60,6 +59,10 @@ class COCServiceInfo(Converter, object):
     VIDEOINFO = 27
     TPDATA = 28
     MULTI = 29
+
+    # Sets for membership testing
+    HDR_FORMATS = {'SMPTE ST 2084 (HDR10)', 'ARIB STD-B67 (HLG)'}
+    WIDESCREEN_ASPECTS = {3, 4, 7, 8, 0xB, 0xC, 0xF, 0x10}
 
     """
     Information for skin developers for TPDATA:
@@ -180,7 +183,7 @@ class COCServiceInfo(Converter, object):
     def reuse(self):
         self.need_wa = iPlayableService.evVideoSizeChanged in self.interesting_events
 
-    def getServiceInfoString(self, info, what, convert=lambda x: "%d" % x):
+    def getServiceInfoString(self, info, what, convert=lambda x: f"{x:d}"):
         v = info.getInfo(what)
         if v == -1:
             return "N/A"
@@ -203,7 +206,7 @@ class COCServiceInfo(Converter, object):
             tpid = info.getInfo(iServiceInformation.sTXTPID)
             return tpid != -1
         if self.type == self.IS_MULTICHANNEL:
-            # FIXME. but currently iAudioTrackInfo doesn't provide more information. pylint: disable=W0511
+            # FIXME. but currently iAudioTrackInfo doesn't provide more information.
             audio = service.audioTracks()
             if audio:
                 n = audio.getNumberOfTracks()
@@ -217,9 +220,9 @@ class COCServiceInfo(Converter, object):
         if self.type == self.IS_CRYPTED:
             return info.getInfo(iServiceInformation.sIsCrypted) == 1
         if self.type == self.IS_HDR:
-            return info.getInfoString(iServiceInformation.sEotf) in ('SMPTE ST 2084 (HDR10)', 'ARIB STD-B67 (HLG)')
+            return info.getInfoString(iServiceInformation.sEotf) in self.HDR_FORMATS
         if self.type == self.IS_WIDESCREEN:
-            return info.getInfo(iServiceInformation.sAspect) in (3, 4, 7, 8, 0xB, 0xC, 0xF, 0x10)
+            return info.getInfo(iServiceInformation.sAspect) in self.WIDESCREEN_ASPECTS
         if self.type == self.SUBSERVICES_AVAILABLE:
             subservices = service.subServices()
             return subservices.getNumberOfSubservices() > 0 if subservices else False
@@ -260,9 +263,9 @@ class COCServiceInfo(Converter, object):
         if self.type == self.SID:
             return self.getServiceInfoString(info, iServiceInformation.sSID)
         if self.type == self.FRAMERATE:
-            return self.getServiceInfoString(info, iServiceInformation.sFrameRate, lambda x: "%d fps" % ((x + 500) // 1000))
+            return self.getServiceInfoString(info, iServiceInformation.sFrameRate, lambda x: f"{(x + 500) // 1000:d} fps")
         if self.type == self.TRANSFERBPS:
-            return self.getServiceInfoString(info, iServiceInformation.sTransferBPS, lambda x: "%d kB/s" % (x // 1024))
+            return self.getServiceInfoString(info, iServiceInformation.sTransferBPS, lambda x: f"{x // 1024:d} kB/s")
         if self.type == self.VIDEO_PARAMS:
             yres = info.getInfo(iServiceInformation.sVideoHeight)
             frame_rate = info.getInfo(iServiceInformation.sFrameRate)
@@ -272,7 +275,7 @@ class COCServiceInfo(Converter, object):
             if not progressive:
                 frame_rate *= 2
             frame_rate = (frame_rate + 500) // 1000
-            return "%d%s%d" % (yres, 'p' if progressive else 'i', frame_rate)
+            return f"{yres:d}{'p' if progressive else 'i'}{frame_rate:d}"
         if self.type == self.VIDEO_TYPE:
             vtype = info.getInfo(iServiceInformation.sVideoType)
             return {
@@ -290,22 +293,22 @@ class COCServiceInfo(Converter, object):
                     return tp_info.get(self.info, "")
                 if tp_data["tuner_type"] in (FE.feSatellite, FE.feSatellite2):
                     if self.type == self.FREQUENCY:
-                        return "%d MHz" % (tp_data["frequency"] / 1000)
+                        return f"{tp_data['frequency'] // 1000:d} MHz"
                     if self.type == self.SATPOSITION:
                         position = tp_data["orbital_position"]
                         if position > 1800:  # west
-                            return "%.1f " % (float(3600 - position) / 10) + _("W")  # pylint: disable=E0602
-                        return "%.1f " % (float(position) / 10) + _("E")  # pylint: disable=E0602
+                            return f"{(3600 - position) / 10:.1f} " + _("W")  # pylint: disable=undefined-variable
+                        return f"{position / 10:.1f} " + _("E")  # pylint: disable=undefined-variable
                     if self.type == self.SYMBOLRATE:
-                        return "%.2f" % (float(tp_data['symbol_rate']) / 1000)
+                        return f"{tp_data['symbol_rate'] / 1000:.2f}"
                     if self.type == self.FEC:
-                        return "%d" % (tp_data['fec_inner'])
+                        return f"{tp_data['fec_inner']:d}"
                 elif tp_data["tuner_type"] == FE.feCable:
                     if self.type == self.FREQUENCY:
-                        return "%d MHz" % (tp_data["frequency"] / 1000)
+                        return f"{tp_data['frequency'] // 1000:d} MHz"
                 elif tp_data["tuner_type"] in (FE.feTerrestrial, FE.feTerrestrial2):
                     if self.type == self.FREQUENCY:
-                        return "%d MHz" % (tp_data["frequency"] / 1000000)
+                        return f"{tp_data['frequency'] // 1000000:d} MHz"
         elif self.type in (self.MODULATION, self.TUNERTYPE):
             tp_data = info.getInfoObject(iServiceInformation.sTransponderData)
             if tp_data:
@@ -329,7 +332,7 @@ class COCServiceInfo(Converter, object):
             if not progressive:
                 frame_rate *= 2
             frame_rate = (frame_rate + 500) / 1000
-            return "%sx%s%s%s" % (xres, yres, 'p' if progressive else 'i', frame_rate)
+            return f"{xres}x{yres}{'p' if progressive else 'i'}{frame_rate}"
         elif self.type == self.PROVIDER:
             return self.getServiceInfoString(info, iServiceInformation.sProvider)
         elif self.type == self.MULTI:
@@ -353,13 +356,13 @@ class COCServiceInfo(Converter, object):
                     infodata = infodata / 1000
                     if tp_data["tuner_type"] in (FE.feTerrestrial, FE.feTerrestrial2):
                         infodata = infodata / 1000
-                    infodata = "%d MHz" % infodata
+                    infodata = f"{infodata:d} MHz"
                 elif infoitem == '%SR':
                     infodata = infodata / 1000
                 if res == '':
-                    res += "%s" % str(infodata)
+                    res += f"{infodata}"
                 else:
-                    res += " %s" % str(infodata)
+                    res += f" {infodata}"
             return res
         return ""
 

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 #
 # Copyright (C) 2018-2023 dream-alpha
@@ -42,9 +41,9 @@ class COCClockToText(ClockToText):
                     mins = time / 60
                     if time % 60 >= 30:
                         mins += 1
-                    text = "%d " % mins + _("min")
+                    text = f"{mins} " + _("min")
             elif self.type == self.AS_LENGTH:
-                text = "%d:%02d" % (time / 60, time % 60)
+                text = f"{time // 60}:{time % 60:02d}"
             elif self.type == self.TIMESTAMP:
                 text = str(time)
             else:
@@ -55,9 +54,9 @@ class COCClockToText(ClockToText):
                     t = gmtime(time)
 
                 if self.type == self.WITH_SECONDS:
-                    text = "%2d:%02d:%02d" % (t.tm_hour, t.tm_min, t.tm_sec)
+                    text = f"{t.tm_hour:2d}:{t.tm_min:02d}:{t.tm_sec:02d}"
                 elif self.type == self.DEFAULT:
-                    text = "%02d:%02d" % (t.tm_hour, t.tm_min)
+                    text = f"{t.tm_hour:02d}:{t.tm_min:02d}"
                 elif self.type == self.DATE:
                     if config.osd.language.value == "de_DE":
                         text = strftime("%A, %d. %B %Y", t)
